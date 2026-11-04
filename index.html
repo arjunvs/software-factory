@@ -1,0 +1,264 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Software Factory Curriculum</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a factory floor plan. Ten stations down a conveyor line, each a work order with check-offs; a sticky gauge tracks output. */
+:root{
+  --bg:#eef1f3; --panel:#ffffff; --ink:#18212b; --muted:#5a6672; --line:#cfd6dc;
+  --accent:#c9820a; --accent-ink:#ffffff; --accent-soft:#f6e7cb;
+  --ah:#7a3fb0; --aa:#b4562b; --dl:#1f6fb8; --oss:#2e7d5b; --build:#18212b;
+  --done:#2e7d5b;
+  --display:"Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --body:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12171d; --panel:#1a2129; --ink:#e6ebef; --muted:#97a3ae; --line:#2c3640;
+  --accent:#e8a33a; --accent-ink:#1a1206; --accent-soft:#3a2c14;
+  --ah:#b98ae6; --aa:#e58a5f; --dl:#6aaef0; --oss:#5fc497; --build:#e6ebef; --done:#5fc497;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12171d; --panel:#1a2129; --ink:#e6ebef; --muted:#97a3ae; --line:#2c3640;
+  --accent:#e8a33a; --accent-ink:#1a1206; --accent-soft:#3a2c14;
+  --ah:#b98ae6; --aa:#e58a5f; --dl:#6aaef0; --oss:#5fc497; --build:#e6ebef; --done:#5fc497;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--body);margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--panel)}
+.wrap{max-width:920px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+a{color:inherit}
+header.top{padding-block:40px 20px}
+.eyebrow{font:500 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+h1{font:800 clamp(40px,7vw,68px)/.95 var(--display);letter-spacing:.01em;text-transform:uppercase;margin:12px 0 14px;text-wrap:balance}
+h1 span{color:var(--accent)}
+.lede{max-width:64ch;color:var(--muted);margin:0}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:22px}
+.note{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px 14px;font-size:13.5px;min-width:0}
+.note b{display:block;font:600 11px/1.2 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+
+.gauge{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--panel);border-bottom:1px solid var(--line)}
+.gauge .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding-block:10px}
+.meter{flex:1 1 220px;display:flex;align-items:center;gap:10px;min-width:0}
+.bar{flex:1;height:10px;background:repeating-linear-gradient(90deg,var(--line) 0 6px,transparent 6px 8px);border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.count{font:500 13px var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.filters{display:flex;flex-wrap:wrap;gap:6px}
+.filters button,.reset button{font:500 12px var(--mono);border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:5px 10px;cursor:pointer}
+.filters button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button:focus-visible,input:focus-visible+span,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+main{padding-block:24px 48px;display:flex;flex-direction:column;gap:18px}
+.station{background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.st-head{display:grid;grid-template-columns:auto 1fr auto;gap:4px 16px;align-items:center;padding:16px 18px;border-bottom:1px solid var(--line)}
+.st-num{font:800 44px/1 var(--display);color:var(--accent);grid-row:span 2;min-width:1.4em}
+.st-title{font:800 26px/1.05 var(--display);text-transform:uppercase;letter-spacing:.01em;margin:0}
+.st-goal{color:var(--muted);font-size:14px;margin:0;grid-column:2;min-width:0}
+.st-prog{font:500 12px var(--mono);font-variant-numeric:tabular-nums;color:var(--muted);grid-row:1;grid-column:3;white-space:nowrap}
+.station.complete .st-prog{color:var(--done)}
+.station.complete .st-num{color:var(--done)}
+ul.items{list-style:none;margin:0;padding:0}
+li.item{border-bottom:1px solid var(--line)}
+li.item:last-child{border-bottom:0}
+li.item[hidden]{display:none!important}
+.row{display:grid;grid-template-columns:24px 1fr;gap:12px;padding:12px 18px;align-items:start}
+.row input{appearance:none;width:20px;height:20px;margin:2px 0 0;border:2px solid var(--muted);border-radius:4px;cursor:pointer;display:grid;place-content:center;background:var(--panel)}
+.row input:checked{background:var(--done);border-color:var(--done)}
+.row input:checked::after{content:"";width:10px;height:5px;border:2px solid var(--panel);border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
+.body{min-width:0}
+.line1{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px}
+.tag{font:500 10.5px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:4px 6px;border-radius:3px;border:1px solid currentColor;white-space:nowrap}
+.t-ah{color:var(--ah)}.t-aa{color:var(--aa)}.t-dl{color:var(--dl)}.t-oss{color:var(--oss)}.t-build{color:var(--build);background:var(--accent-soft);border-color:var(--accent)}
+.name{font-weight:600}
+.name a{text-decoration-color:var(--line);text-underline-offset:3px}
+.name a:hover{text-decoration-color:var(--accent)}
+.meta{font:12px var(--mono);color:var(--muted)}
+.desc{color:var(--muted);font-size:14px;margin:3px 0 0;max-width:70ch}
+code{font:13px var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:3px;padding:1px 5px;overflow-wrap:anywhere}
+li.item.checked .name{text-decoration:line-through;text-decoration-color:var(--muted);color:var(--muted)}
+.capstone{border:2px solid var(--accent)}
+.capstone .st-head{background:var(--accent-soft)}
+footer{padding-block:0 48px;color:var(--muted);font-size:13px}
+footer h2{font:800 22px var(--display);text-transform:uppercase;color:var(--ink);margin:0 0 8px}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 14px}
+.reset{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.reset .confirm{display:none;gap:8px;align-items:center}
+.reset.asking .confirm{display:flex}
+.reset.asking .ask{display:none}
+@media (max-width:520px){.st-head{grid-template-columns:auto 1fr}.st-prog{grid-column:2;grid-row:auto}.st-num{font-size:36px}}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+
+<header class="top wrap">
+  <div class="eyebrow">Self-study · 10 stations · free materials only</div>
+  <h1>Build a <span>Software Factory</span></h1>
+  <p class="lede">Tickets go in, reviewed pull requests come out. This path combines Matt Pocock’s free AI Hero guides and open-source tools, Anthropic Academy, and DeepLearning.AI short courses. Each station ends with something you build in your own practice repo. Tick items off as you go; your progress is saved in this browser.</p>
+  <div class="notes">
+    <div class="note"><b>What’s free</b>Every course, guide and repo here is free to read or watch. DeepLearning.AI graded assignments and certificates need a Pro membership; the videos don’t. Anthropic Academy issues certificates for free.</div>
+    <div class="note"><b>What isn’t</b>Running an agent costs model usage. Claude Code needs a paid Claude plan or an Anthropic API key. Sandcastle also supports Codex, Copilot, Cursor, Pi and OpenCode agents, and the skills work in Copilot, Cursor and Codex too.</div>
+    <div class="note"><b>Left out on purpose</b>AI Hero’s paid cohorts (including <i>Software Factories for Real Engineers</i>) and its paid crash courses. This path rebuilds that ground from the free material.</div>
+  </div>
+</header>
+
+<div class="gauge">
+  <div class="wrap">
+    <div class="meter"><div class="bar" aria-hidden="true"><i id="fill"></i></div><span class="count" id="count" aria-live="polite">0 / 0 done</span></div>
+    <div class="filters" role="group" aria-label="Show items from">
+      <button type="button" data-f="all" aria-pressed="true">All</button>
+      <button type="button" data-f="ah" aria-pressed="false">AI Hero</button>
+      <button type="button" data-f="aa" aria-pressed="false">Anthropic</button>
+      <button type="button" data-f="dl" aria-pressed="false">DeepLearning.AI</button>
+      <button type="button" data-f="oss" aria-pressed="false">Repos</button>
+      <button type="button" data-f="build" aria-pressed="false">Build</button>
+      <button type="button" data-f="todo" aria-pressed="false">Not done</button>
+    </div>
+  </div>
+</div>
+
+<main class="wrap" id="stations"></main>
+
+<footer class="wrap">
+  <h2>Key</h2>
+  <div class="legend">
+    <span class="tag t-ah">AI Hero</span><span class="tag t-aa">Anthropic Academy</span><span class="tag t-dl">DeepLearning.AI</span><span class="tag t-oss">Open-source repo</span><span class="tag t-build">Build task</span>
+  </div>
+  <p>Links checked against the live pages on 3 November 2026. Course catalogues change, so if a link moves, start from <a href="https://anthropic.skilljar.com/">anthropic.skilljar.com</a>, <a href="https://www.aihero.dev/learn">aihero.dev/learn</a> or <a href="https://www.deeplearning.ai/courses?types=short_course">deeplearning.ai short courses</a>.</p>
+  <div class="reset" id="reset">
+    <button type="button" class="ask" id="resetAsk">Clear all ticks</button>
+    <span class="confirm"><span>Clear every tick on this page?</span><button type="button" id="resetYes">Yes, clear</button><button type="button" id="resetNo">Keep them</button></span>
+  </div>
+</footer>
+
+<script>
+const AH="https://www.aihero.dev/";
+const S=[
+{t:"Tool up",g:"Accounts and local prerequisites, before any lesson.",i:[
+ ["build","Create your free learning accounts","Anthropic Academy runs on Skilljar and needs only an email, not an Anthropic account. Also sign in at DeepLearning.AI.","https://anthropic.skilljar.com/",""],
+ ["ah","AI Skills for Real Engineers (free 7-lesson email course)","Lesson 1 arrives on signup. It sets the order of the workflow you'll assemble in stations 4–8.",AH+"skills/subscribe","7 lessons by email"],
+ ["build","Install Git, Node.js and Docker Desktop","Sandcastle's prerequisites are Git plus a sandbox provider; Docker Desktop is the common local choice. Node runs <code>npx</code> and the skills installer.","https://www.docker.com/",""],
+ ["build","Pick a practice repo on GitHub","A small real project with a test runner. Every build task below happens here, so it becomes your factory floor.","",""]
+]},
+{t:"How the machines think",g:"Enough model and agent theory to reason about failures.",i:[
+ ["aa","AI Capabilities and Limitations","Anthropic's introductory course on how AI works.","https://anthropic.skilljar.com/ai-capabilities-and-limitations",""],
+ ["ah","What Is An LLM?","Structure, operation and how LLMs are made.",AH+"what-is-an-llm","6 min read"],
+ ["ah","What Is An Agent?","Agents versus workflows: when to let the model improvise.",AH+"what-is-an-agent","Video"],
+ ["ah","LLM Fundamentals","Matt's free fundamentals guide.",AH+"llm-fundamentals","Guide"],
+ ["ah","AI Coding Dictionary","Bookmark it. Terms like context window, compaction and tracer bullet come up constantly.",AH+"ai-coding-dictionary","Reference"],
+ ["aa","AI Fluency for Builders","Optional. AI fluency framed for people who own the arc from problem to shipped solution.","https://anthropic.skilljar.com/ai-fluency-for-builders","Optional"]
+]},
+{t:"Run one agent well",g:"Fluency with a single Claude Code session, the unit the factory multiplies.",i:[
+ ["aa","Claude Code 101","Using Claude Code in your daily development workflow.","https://anthropic.skilljar.com/claude-code-101",""],
+ ["dl","Claude Code: A Highly Agentic Coding Assistant","Taught by Elie Schoppik (Anthropic). Explore, build, test, refactor and debug codebases.","https://www.deeplearning.ai/short-courses/claude-code-a-highly-agentic-coding-assistant/","10 video lessons"],
+ ["aa","Claude Code in Action","Run long, hands-off sessions you can trust: steer, configure, automate, verify. The bridge to AFK work.","https://anthropic.skilljar.com/claude-code-in-action",""],
+ ["ah","An Introduction To Plan Mode","Iterate on requirements before any code is written.",AH+"plan-mode-introduction","7 min read"],
+ ["ah","A Complete Guide To AGENTS.md","Progressive disclosure and keeping instructions focused.",AH+"a-complete-guide-to-agents-md","7 min read"],
+ ["ah","How To Kill The Bloat In Claude Code's System Prompt","Keep the agent in its smart zone.",AH+"how-to-kill-the-bloat-in-claude-codes-system-prompt","4 min read"],
+ ["build","Write the repo's agent instructions file","Add a short CLAUDE.md / AGENTS.md: how to run tests, typecheck and lint. Keep it lean.","",""]
+]},
+{t:"Make the codebase agent-ready",g:"Factories fail on weak feedback loops and shallow modules. Fix those first.",i:[
+ ["ah","The AI Engineer Mindset","Success metrics and a culture of measured improvement.",AH+"the-ai-engineer-mindset","5 min read"],
+ ["ah","How To Make Codebases AI Agents Love","Deep modules and architecture that make agents effective.",AH+"how-to-make-codebases-ai-agents-love","Video"],
+ ["ah","Tracer Bullets: Keeping AI Slop Under Control","Small end-to-end slices with early feedback, the shape every factory ticket should take.",AH+"tracer-bullets","Article"],
+ ["ah","The /tdd and /codebase-design skills","The red-green-refactor rules, and the vocabulary for deep modules.",AH+"skills-tdd","Skill guides"],
+ ["ah","The /improve-codebase-architecture skill","Find modules worth refactoring, as a visual report.",AH+"skills-improve-codebase-architecture","Skill guide"],
+ ["build","Make one command prove the code works","One script that runs tests + typecheck + lint and fails loudly. Agents can only self-correct against this.","",""]
+]},
+{t:"Encode process as skills",g:"Turn good engineering habits into files the agent runs the same way every time.",i:[
+ ["aa","Introduction to agent skills","Build, configure, share and troubleshoot Skills in Claude Code.","https://anthropic.skilljar.com/introduction-to-agent-skills",""],
+ ["dl","Agent Skills with Anthropic","How skills compare with tools, MCP and subagents, and how to compose them into workflows.","https://www.deeplearning.ai/short-courses/agent-skills-with-anthropic/","10 video lessons"],
+ ["aa","Introduction to subagents","Delegate to isolated context windows; structured output, obstacle reporting, limited tool access.","https://anthropic.skilljar.com/introduction-to-subagents","4 lessons"],
+ ["ah","AI Skills for Real Engineers (overview)","The 27-skill system, grouped by when you reach for each.",AH+"skills",""],
+ ["oss","Install mattpocock/skills","<code>npx skills@latest add mattpocock/skills</code>, or in Claude Code <code>claude plugins install mattpocock-skills</code>. MIT licensed.","https://github.com/mattpocock/skills",""],
+ ["ah","Run /setup-matt-pocock-skills","Set the issue tracker (GitHub, Linear or local files), triage labels and docs layout for your repo.",AH+"skills-setup-matt-pocock-skills","Skill guide"],
+ ["ah","5 Agent Skills I Use Every Day","How the skills combine in daily use.",AH+"5-agent-skills-i-use-every-day","Video"],
+ ["ah","The /writing-for-agents skill","How to write skills and other documents agents read.",AH+"skills-writing-for-agents","Skill guide"],
+ ["build","Write one skill of your own","Package a repeated instruction from your team's standards as a SKILL.md and use it in a session.","",""]
+]},
+{t:"The intake line",g:"Turn an idea into agent-ready tickets with real blocking edges.",i:[
+ ["dl","Spec-Driven Development with Coding Agents","Built with JetBrains. Write a clear markdown spec, then drive the agent through plan, implement, verify.","https://www.deeplearning.ai/short-courses/spec-driven-development-with-coding-agents/","15 video lessons"],
+ ["ah","The /grill-with-docs skill","Get interviewed about a plan and record the decisions. The first step of the main flow.",AH+"skills-grill-with-docs","Skill guide"],
+ ["ah","The /to-spec skill","Turn an agreed conversation into a written spec.",AH+"skills-to-spec","Skill guide"],
+ ["ah","The /to-tickets skill","Vertical-slice tickets that fit one fresh context window, each with blocking edges.",AH+"skills-to-tickets","8 min read"],
+ ["ah","The /wayfinder and /triage skills","Wayfinder maps a large effort as decisions; triage turns raw backlog into agent-ready work.",AH+"skills-wayfinder","Skill guides"],
+ ["ah","Real-world feature build with Claude Code","Grill, PRD, GitHub issues, AFK agents and QA end to end.",AH+"real-world-feature-build-with-claude-code","Video"],
+ ["build","Ship one feature through intake","/grill-with-docs → /to-spec → /to-tickets on GitHub Issues. For each ticket, answer “what can I demo when this is done?”","",""]
+]},
+{t:"The assembly line: AFK loops",g:"Let the agent work tickets on its own, first watched, then unattended.",i:[
+ ["ah","Getting Started With Ralph","Run an agent in a loop with Claude Code and Docker Desktop: ralph-once.sh, then afk-ralph.sh.",AH+"getting-started-with-ralph","5 min read"],
+ ["ah","11 Tips For AI Coding With Ralph Wiggum","Scope, progress tracking, feedback loops, sandboxing and cost.",AH+"tips-for-ai-coding-with-ralph-wiggum","19 min read"],
+ ["ah","Why the Anthropic Ralph plugin sucks (use a bash loop instead)","Why fresh-context loops beat in-session loops.",AH+"why-the-anthropic-ralph-plugin-sucks","Article"],
+ ["ah","Here's How To Stream Claude Code With AFK Ralph","Use jq to see what the agent is doing while AFK.",AH+"heres-how-to-stream-claude-code-with-afk-ralph","Article"],
+ ["ah","The /implement and /implement-spec skills","Build one ticket test-first per session, or a whole spec with parallel subagents.",AH+"skills-implement","Skill guides"],
+ ["build","Run HITL, then AFK","Run ralph-once.sh and watch each commit. When you trust it, run the AFK loop in Docker with a max-iteration cap.","",""]
+]},
+{t:"Sandboxed, parallel factory",g:"Swap the bash loop for Sandcastle: isolated sandboxes, branches, parallel agents, merge back.",i:[
+ ["oss","Sandcastle (repo)","TypeScript library: invoke agents with <code>run()</code> in Docker, Podman, Vercel and other sandboxes. MIT.","https://github.com/mattpocock/sandcastle",""],
+ ["ah","Sandcastle: Getting started","<code>npm install --save-dev @ai-hero/sandcastle</code>, then <code>npx @ai-hero/sandcastle init</code>.",AH+"sandcastle/getting-started","Docs"],
+ ["ah","Core concepts, sandbox providers, branch strategies","head vs merge-to-head vs named branch, and when each is safe.",AH+"sandcastle/core-concepts","Docs"],
+ ["ah","Prompts, iterations and hooks","<code>{{KEY}}</code> args, <code>!`command`</code> context, completion signals, <code>npm install</code> on sandbox ready.",AH+"sandcastle/prompts","Docs"],
+ ["ah","Agent providers","Claude Code, Codex, Pi, Copilot, Cursor and OpenCode.",AH+"sandcastle/agent-providers","Docs"],
+ ["build","Scaffold the factory","<code>sandcastle init</code> with GitHub Issues, the Sandcastle label and the <code>parallel-planner-with-review</code> template. Auth via <code>claude setup-token</code> or an API key in <code>.sandcastle/.env</code>.","",""],
+ ["build","Run it against your tickets","<code>npx tsx .sandcastle/main.ts</code>. Label the station-5 tickets and let it plan, implement on separate branches, review and merge.","",""]
+]},
+{t:"Quality control",g:"Gate every change on proof, and make each run improve the next.",i:[
+ ["ah","The /code-review skill","Review a diff against your standards and against the spec.",AH+"skills-code-review","Skill guide"],
+ ["ah","The /pr and /retro skills","Reviewable PR bodies; a session retro that improves the agent's environment.",AH+"skills-retro","Skill guides"],
+ ["ah","The /diagnosing-bugs skill","Start a hard bug from a failing repro.",AH+"skills-diagnosing-bugs","Skill guide"],
+ ["dl","Evaluating AI Agents","Built with Arize AI. Trace an agent and evaluate each step with code-based and LLM-as-judge evals.","https://www.deeplearning.ai/short-courses/evaluating-ai-agents/","15 video lessons"],
+ ["build","Gate review on tests","In Sandcastle use <code>createSandbox()</code>: implement, run <code>sandbox.exec(\"npm test\")</code>, and only then run the review agent.","",""]
+]},
+{t:"Extend with tools (MCP)",g:"Optional. Connect the factory to your own systems once the line runs.",i:[
+ ["aa","Introduction to Model Context Protocol","Build MCP servers and clients in Python: tools, resources, prompts.","https://anthropic.skilljar.com/introduction-to-model-context-protocol",""],
+ ["dl","MCP: Build Rich-Context AI Apps with Anthropic","Build and deploy an MCP server and an MCP-compatible app.","https://www.deeplearning.ai/short-courses/mcp-build-rich-context-ai-apps-with-anthropic/","11 video lessons"],
+ ["aa","Model Context Protocol: Advanced Topics","Sampling, notifications, file system access and transports.","https://anthropic.skilljar.com/model-context-protocol-advanced-topics",""],
+ ["aa","Building with the Claude API","The full API, for writing your own orchestration beyond Sandcastle.","https://anthropic.skilljar.com/claude-with-the-anthropic-api","Optional"]
+]},
+{t:"Capstone: the factory works",g:"Your acceptance test for the whole curriculum.",cap:1,i:[
+ ["build","One idea in, reviewed PRs out","Grill → spec → tickets → Sandcastle run → review gate → merged, with no hand-written code from you.","",""],
+ ["build","Run it overnight","Leave a labelled batch running AFK. In the morning, QA what merged and file tickets for what didn't.","",""],
+ ["build","Run /retro and feed it back","Turn what went wrong into a skill, an AGENTS.md line or a stronger test.","",""]
+]}
+];
+const KEY="sf-curriculum-v1";
+let done={};try{done=JSON.parse(localStorage.getItem(KEY)||"{}")||{}}catch(e){done={}}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(done))}catch(e){}};
+const LBL={ah:"AI Hero",aa:"Anthropic",dl:"DeepLearning.AI",oss:"Repo",build:"Build"};
+const root=document.getElementById("stations");
+root.innerHTML=S.map((s,si)=>`
+<section class="station${s.cap?" capstone":""}" data-s="${si}">
+ <div class="st-head"><div class="st-num">${s.cap?"★":String(si).padStart(2,"0")}</div><h2 class="st-title">${s.t}</h2><span class="st-prog"></span><p class="st-goal">${s.g}</p></div>
+ <ul class="items">${s.i.map((it,ii)=>{const id=`s${si}i${ii}`;const[k,n,d,u,m]=it;
+  return `<li class="item" data-k="${k}" data-id="${id}"><label class="row" for="${id}"><input type="checkbox" id="${id}"><span class="body">
+   <span class="line1"><span class="tag t-${k}">${LBL[k]}</span><span class="name">${u?`<a href="${u}" target="_blank" rel="noopener">${n}</a>`:n}</span>${m?`<span class="meta">${m}</span>`:""}</span>
+   <p class="desc">${d}</p></span></label></li>`}).join("")}</ul>
+</section>`).join("");
+let filter="all";
+function render(){
+ let tot=0,dn=0;
+ root.querySelectorAll(".station").forEach(sec=>{
+  let st=0,sd=0;
+  sec.querySelectorAll("li.item").forEach(li=>{
+   const id=li.dataset.id,c=!!done[id];st++;if(c)sd++;
+   li.querySelector("input").checked=c;li.classList.toggle("checked",c);
+   li.hidden=!(filter==="all"||(filter==="todo"?!c:li.dataset.k===filter));
+  });
+  tot+=st;dn+=sd;
+  sec.querySelector(".st-prog").textContent=`${sd} / ${st}`;
+  sec.classList.toggle("complete",sd===st);
+  sec.hidden=![...sec.querySelectorAll("li.item")].some(l=>!l.hidden);
+ });
+ document.getElementById("count").textContent=`${dn} / ${tot} done`;
+ document.getElementById("fill").style.width=(tot?dn/tot*100:0)+"%";
+}
+root.addEventListener("change",e=>{if(e.target.matches("input[type=checkbox]")){const id=e.target.id;if(e.target.checked)done[id]=1;else delete done[id];save();render()}});
+document.querySelectorAll(".filters button").forEach(b=>b.addEventListener("click",()=>{filter=b.dataset.f;document.querySelectorAll(".filters button").forEach(x=>x.setAttribute("aria-pressed",x===b));render()}));
+const rs=document.getElementById("reset");
+document.getElementById("resetAsk").onclick=()=>rs.classList.add("asking");
+document.getElementById("resetNo").onclick=()=>rs.classList.remove("asking");
+document.getElementById("resetYes").onclick=()=>{done={};save();rs.classList.remove("asking");render()};
+render();
+</script>
+
+</body></html>
